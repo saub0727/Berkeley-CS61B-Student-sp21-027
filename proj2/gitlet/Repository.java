@@ -1,5 +1,6 @@
 package gitlet;
 
+import static gitlet.HEAD.HEAD_FILE;
 import static gitlet.Staging.*;
 import static gitlet.Utils.*;
 
@@ -25,7 +26,6 @@ public class Repository {
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-    public static final File HEAD = join(CWD, "HEAD");
 
     /**
      * It will have a single branch: master, which initially
@@ -55,13 +55,15 @@ public class Repository {
             System.exit(0);
         }
         GITLET_DIR.mkdir();
-        Staging.stagingRemove.mkdirs();
-        Staging.stagingAdd.mkdir();
-        Blob.blobs.mkdir();
+        Blob.blobsDir.mkdir();
         Commit.COMMITS_DIR.mkdir();
+        Staging stagingArea = new Staging();
+        stagingArea.save();
         File initialCommitFile = Utils.join(Commit.COMMITS_DIR, "initialCommit");
         Commit initialCommit = new Commit();
         Utils.writeObject(initialCommitFile, initialCommit);
+        // head init?
+
     }
 
     public static void add(String... args){
@@ -74,46 +76,44 @@ public class Repository {
         }
         String fileName = args[1];
         // relative path, so this can trigger the file;
-        File newFile = Utils.join(CWD, fileName);
-        if (!newFile.exists()){
+        File addedFile = join(CWD, fileName);
+        if (!addedFile.exists()){
             System.out.println("File does not exist.");
             System.exit(0);
         }
         //Adds a copy of the file as it currently exists to the staging area
-        // (see the description of the commit command). For this reason, adding
-        // a file is also called staging the file for addition. Staging an
-        // already-staged file overwrites the previous entry in the staging
-        // area with the new contents. The staging area should be somewhere
+        // (see the description of the commit command).
+        // The staging area should be somewhere
         // in .gitlet. If the current working version of the file is identical
         // to the version in the current commit, do not stage it to be added,
         // and remove it from the staging area if it is already there (as can
         // happen when a file is changed, added, and then changed back to it’s
         // original version). The file will no longer be staged for removal
         // (see gitlet rm), if it was at the time of the command.
-        Blob newBlob = new Blob(readContents(newFile));
-        String newBlobSHA1 = newBlob.getBlobSHA1();
-
-
-
-        Commit currentCommit = Commit.load(Branch.getCommitId(HEAD.getBranchName()));
-        Staging stagingArea = staging.load();
-        // If the current working version of the file is identical to the version in the current
-        // commit, do not stage it to be added
-        if (newBlobId.equals(currentCommit.getBlobId(fileName))) {
-            stagingArea.clear();
-            stagingArea.save();
+        Staging prevStaging = new Staging();
+        prevStaging = prevStaging.load();
+        // log???
+        // if nothing changed, same SHA1, return
+        Blob addedFileBlob = new Blob(readContents(addedFile), fileName);
+        String prevFileSHA1 = prevStaging.getAdditionMap().get(fileName);
+        String addedFileSHA1 = addedFileBlob.getBlobSHA1();
+        if (prevStaging.getAdditionSet().contains(addedFileBlob.getBlobSHA1())){
             return;
         }
-        // and remove it from the staging area if it is already there
-        if (newBlobId.equals(stagingArea.getAddition().get(fileName))) {
-            stagingArea.getAddition().remove(fileName);
+        // if it has identical name with previous version, update the staging
+        if (prevStaging.getAdditionMap().containsKey(fileName)){
+            prevStaging.rmAdditionMap(fileName);
+            prevStaging.rmAdditionSet(prevFileSHA1);
+            prevStaging.addRemovalSet(prevFileSHA1);
+            // original blob check, if it is in log, if not, delete it
+            // TODO:
+            prevStaging.addAdditionMap(fileName, addedFileSHA1);
+            prevStaging.addAdditionSet(addedFileSHA1);
+            addedFileBlob.save();
+            prevStaging.save();
         }
-        stagingArea.getAddition().put(fileName, newBlobId);
-        // The file will no longer be staged for removal (see gitlet rm), if it was at the time
-        // of the command.
-        stagingArea.getRemoval().remove(fileName);
-        newBlob.save();
-        stagingArea.save();
+        // check the current commit
+
 
     }
 
@@ -129,6 +129,13 @@ public class Repository {
         // If no files have been staged, abort. Print the message No changes added to the commit.
 
     }
+
+    public static void rm(String... args){
+
+    }
+
+
+
 
     public static void log() {
     }

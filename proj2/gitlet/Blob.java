@@ -6,13 +6,15 @@ import java.io.File;
 import java.io.Serializable;
 
 public class Blob implements Serializable {
-  public static final File blobs = join(Repository.GITLET_DIR, ".blobs");
+  public static final File blobsDir = join(Repository.GITLET_DIR, ".blobs");
   private final byte[] contents;
   private final String blobSHA1;
+  private final String fileName;
 
-  public Blob(byte[] contents) {
+  public Blob(byte[] contents, String fileName) {
     this.contents = contents;
-    this.blobSHA1 = Utils.sha1(this.contents);
+    this.blobSHA1 = Utils.sha1(contents);
+    this.fileName = fileName;
   }
 
   public byte[] getContents() {
@@ -23,7 +25,14 @@ public class Blob implements Serializable {
     return this.blobSHA1;
   }
 
+  public String getFileName() {
+    return this.fileName;
+  }
+
   public void save() {
-    Utils.writeContents(Utils.join(blobs, blobSHA1), contents);
+    File subBlobsDir = join(blobsDir, getBlobSHA1());
+    subBlobsDir.mkdir();
+    File blobs = join(subBlobsDir, getFileName());
+    Utils.writeContents(blobs, this.getContents());
   }
 }

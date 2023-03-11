@@ -51,17 +51,18 @@ public class Commit implements Serializable {
     }
 
     private String getSHA1(){
-        ByteArrayOutputStream temp = new ByteArrayOutputStream();
-        ObjectOutputStream oos = null;
-        try {
-            oos = new ObjectOutputStream(temp);
-            oos.writeObject(this);
-            oos.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(0);
-        }
-        return Utils.sha1((Object) bos.toByteArray());
+//        ByteArrayOutputStream temp = new ByteArrayOutputStream();
+//        ObjectOutputStream oos = null;
+//        try {
+//            oos = new ObjectOutputStream(temp);
+//            oos.writeObject(this);
+//            oos.flush();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            System.exit(0);
+//        }
+//        return Utils.sha1((Object) bos.toByteArray());
+        return null;
     }
 
     public String getFirstParent() {
