@@ -30,9 +30,7 @@ public class Blob implements Serializable {
   }
 
   public void save() {
-    File subBlobsDir = join(blobsDir, getBlobSHA1());
-    subBlobsDir.mkdir();
-    File blobs = join(subBlobsDir, getFileName());
+    File blobs = join(blobsDir, getFileName());
     Utils.writeContents(blobs, this.getContents());
   }
 }

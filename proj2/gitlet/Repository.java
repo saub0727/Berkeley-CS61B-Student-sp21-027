@@ -1,11 +1,11 @@
 package gitlet;
 
+import static gitlet.Blob.blobsDir;
 import static gitlet.Commit.COMMITS_DIR;
-import static gitlet.HEAD.HEAD_FILE;
-import static gitlet.Staging.*;
 import static gitlet.Utils.*;
 
 import java.io.File;
+import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -63,7 +63,7 @@ public class Repository {
             System.exit(0);
         }
         GITLET_DIR.mkdir();
-        Blob.blobsDir.mkdir();
+        blobsDir.mkdir();
         COMMITS_DIR.mkdir();
         Branch.BRANCHE_DIR.mkdir();
 //        Remote.REMOTE_DIR.mkdir();
@@ -88,50 +88,32 @@ public class Repository {
             System.out.println("File does not exist.");
             System.exit(0);
         }
-        //Adds a copy of the file as it currently exists to the staging area
-        // (see the description of the commit command).
-        // The staging area should be somewhere
-        // in .gitlet. If the current working version of the file is identical
-        // to the version in the current commit, do not stage it to be added,
-        // and remove it from the staging area if it is already there (as can
-        // happen when a file is changed, added, and then changed back to it’s
-        // original version). The file will no longer be staged for removal
-        // (see gitlet rm), if it was at the time of the command.
-        Staging prevStaging = new Staging();
-        prevStaging = prevStaging.load();
-        // log???
-        // if nothing changed, same SHA1, return
+        Staging prevStaging = Staging.load();
+        String currentBrand = HEAD.load();
+        String currentCommitId = Branch.getCommitId(currentBrand);
+        File currentCommitFile = Utils.join(COMMITS_DIR, currentCommitId);
+        Commit currentCommit = Utils.readObject(currentCommitFile, Commit.class);
+        TreeSet<String> currentCommitBlobsSet = currentCommit.getBlobsSet();
+
         Blob addedFileBlob = new Blob(readContents(addedFile), fileName);
         String prevFileSHA1 = prevStaging.getAdditionMap().get(fileName);
         String addedFileSHA1 = addedFileBlob.getBlobSHA1();
+        // situation: if compared with current commit, nothing changed, same SHA1, return
+        if (currentCommitBlobsSet.contains(addedFileSHA1)){return;}
         // situation: same name, same SHA1
-        if (prevStaging.getAdditionSet().contains(addedFileBlob.getBlobSHA1())){
-            return;
-        }
+        if (prevStaging.getAdditionSet().contains(addedFileSHA1)){return;}
         // situation: same name, diff SHA1
         // if it has identical name with previous version, update the staging
         if (prevStaging.getAdditionMap().containsKey(fileName)){
             prevStaging.rmAdditionMap(fileName);
             prevStaging.rmAdditionSet(prevFileSHA1);
             prevStaging.addRemovalSet(prevFileSHA1);
-            // original blob check, if it is in log, if not, delete it
-            // TODO:
-            prevStaging.addAdditionMap(fileName, addedFileSHA1);
-            prevStaging.addAdditionSet(addedFileSHA1);
-            addedFileBlob.save();
-            prevStaging.save();
-            return;
         }
         // situation: new name
         prevStaging.addAdditionMap(fileName, addedFileSHA1);
         prevStaging.addAdditionSet(addedFileSHA1);
         addedFileBlob.save();
         prevStaging.save();
-        // check the current commit, when log/HEAD created, have to check already exist
-
-        String currentBrand = HEAD.load();
-        String currentCommitId = Branch.getCommitId(currentBrand);
-
     }
 
     public static void commit(String... args){
@@ -155,28 +137,33 @@ public class Repository {
         }
         String currentBrand = HEAD.load();
         String currentCommitId = Branch.getCommitId(currentBrand);
-        File currentCommitFile = ;
+        File currentCommitFile = Utils.join(COMMITS_DIR, currentCommitId);
+        Commit currentCommit = Utils.readObject(currentCommitFile, Commit.class);
 
-
-        Commit newCommit = new Commit(message, currentCommitId, mergedCommitId);
-        for (Map.Entry<String, String> entry : stagingArea.getAddition().entrySet()) {
-            String fileName = entry.getKey();
-            String blobId = entry.getValue();
-            newCommit.getBlobs().put(fileName, blobId);
+        List<String> allFileNames = plainFilenamesIn(blobsDir);
+        if (!curStagingRemovalSet.isEmpty()){
+            for (String item : curStagingRemovalSet){
+                if (allFileNames.contains(item)){
+                    if (currentCommit.getBlobsSet().contains(item)){
+                        continue;
+                    }
+                    curStagingRemovalSet.remove(item);
+                    continue;
+                }
+                curStagingRemovalSet.remove(item);
+                File temp = new File(item);
+                temp.delete();
+            }
         }
-        for (String fileName : stagingArea.getRemoval()) {
-            newCommit.getBlobs().remove(fileName);
-        }
 
-        Branch.setCommitId(HEAD.getBranchName(), newCommit.getHash());
-        stagingArea.clear();
-        stagingArea.save();
+        Commit newCommit = new Commit(currentCommitId, currentCommit.getFirstParent(), message,
+            curStagingAdditionMap, curStagingAdditionSet, curStagingRemovalSet);
         newCommit.save();
+        curStaging.clear();
+        curStaging.save();
+        Branch.setCommitId(HEAD.load(), sha1(newCommit));
 
-        Commit newCommit = new Commit();
-        prevCommit = Utils.readObject(HEAD, Commit.class);
-
-        /**
+        /*
          * Saves a snapshot of tracked files in the current commit and staging area
          * so they can be restored at a later time, creating a new commit. The commit
          * is said to be tracking the saved files. By default, each commit’s snapshot
@@ -189,15 +176,12 @@ public class Repository {
          * files that were staged for addition but won’t be tracked by its parent.
          * Finally, files tracked in the current commit may be untracked in the
          * new commit as a result being staged for removal by the rm command (below).
-         *
+
          * The bottom line: By default a commit has the same file contents as its
          * parent. Files staged for addition and removal are the updates to the
          * commit. Of course, the date (and likely the message) will also different
          * from the parent.
          */
-
-
-
     }
 
     public static void rm(String... args){
@@ -216,23 +200,30 @@ public class Repository {
             System.out.println("No reason to remove the file.");
             System.exit(0);
         }
-        // If the file is tracked in the current commit, stage it for removal and remove
-        // the file from the working directory if the user has not already
-        // done so (do not remove it unless it is tracked in the current commit).
-        Staging prevStaging = new Staging();
-        prevStaging = prevStaging.load();
+        String currentBrand = HEAD.load();
+        String currentCommitId = Branch.getCommitId(currentBrand);
+        File currentCommitFile = Utils.join(COMMITS_DIR, currentCommitId);
+        Commit currentCommit = Utils.readObject(currentCommitFile, Commit.class);
+        TreeSet<String> currentCommitBlobsSet = currentCommit.getBlobsSet();
+
+        Staging prevStaging = Staging.load();
         Blob rmFileBlob = new Blob(readContents(rmFile), fileName);
         String prevFileSHA1 = prevStaging.getAdditionMap().get(fileName);
         String rmFileSHA1 = rmFileBlob.getBlobSHA1();
+        // check if in current commit first
+        if (currentCommitBlobsSet.contains(rmFileSHA1)){
+            Utils.join(CWD, fileName).delete();
+            prevStaging.addRemovalSet(rmFileSHA1);
+            prevStaging.save();
+            return;
+        }
         // in staging:
         if (prevStaging.getAdditionMap().containsKey(fileName)){
             prevStaging.rmAdditionMap(fileName);
             prevStaging.rmAdditionSet(prevFileSHA1);
             prevStaging.addRemovalSet(prevFileSHA1);
             prevStaging.save();
-            return;
         }
-        // in current commit:
     }
 
 
