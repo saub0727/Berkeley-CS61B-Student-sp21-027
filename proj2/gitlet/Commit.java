@@ -10,6 +10,8 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 
 /** Represents a gitlet commit object.
@@ -30,94 +32,53 @@ public class Commit implements Serializable {
     public static final File COMMITS_DIR = Utils.join(Repository.GITLET_DIR, "commits");
     private String firstParent;
     private String secondParent;
-    private String hash;
     private String message;
     private Date timeStamp;
-    private HashMap<String, String> blobs;
+    private TreeMap<String, String> blobsMap;
+    private TreeSet<String> blobsSet;
 
     public Commit() {
+        this.firstParent = null;
+        this.secondParent = null;
         this.message = "initial commit";
         this.timeStamp = new Date(0);
+        this.blobsMap = null;
+        this.blobsSet = null;
     }
 
-    public Commit(String firstParent, String secondParent, String hash, String message,
-        HashMap<String, String> blobs) {
+    public Commit(String firstParent, String secondParent, String message,
+        TreeMap<String, String> blobsMap, TreeSet<String> blobsSet) {
         this.firstParent = firstParent;
         this.secondParent = secondParent;
-        this.hash = hash;
         this.message = message;
         this.timeStamp = new Date();
-        this.blobs = blobs;
-    }
-
-    private String getSHA1(){
-//        ByteArrayOutputStream temp = new ByteArrayOutputStream();
-//        ObjectOutputStream oos = null;
-//        try {
-//            oos = new ObjectOutputStream(temp);
-//            oos.writeObject(this);
-//            oos.flush();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            System.exit(0);
-//        }
-//        return Utils.sha1((Object) bos.toByteArray());
-        return null;
+        this.blobsMap = blobsMap;
+        this.blobsSet = blobsSet;
     }
 
     public String getFirstParent() {
-        return this.firstParent;
+        return firstParent;
     }
 
     public String getSecondParent() {
-        return this.secondParent;
-    }
-
-    public String getHash() {
-        return this.hash;
+        return secondParent;
     }
 
     public String getMessage() {
-        return this.message;
+        return message;
     }
 
     public Date getTimeStamp() {
-        return this.timeStamp;
+        return timeStamp;
     }
 
-    public HashMap<String, String> getBlobs() {
-        return this.blobs;
+    public TreeMap<String, String> getBlobsMap() {
+        return blobsMap;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof Commit)) {
-            return false;
-        }
-        Commit commit = (Commit) o;
-        return Objects.equals(firstParent, commit.firstParent) && Objects.equals(
-            secondParent, commit.secondParent) && Objects.equals(hash, commit.hash)
-            && Objects.equals(message, commit.message) && Objects.equals(timeStamp,
-            commit.timeStamp) && Objects.equals(blobs, commit.blobs);
+    public TreeSet<String> getBlobsSet() {
+        return blobsSet;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(firstParent, secondParent, hash, message, timeStamp, blobs);
-    }
-
-    @Override
-    public String toString() {
-        return "Commit{" +
-            "firstParent='" + firstParent + '\'' +
-            ", secondParent='" + secondParent + '\'' +
-            ", hash='" + hash + '\'' +
-            ", message='" + message + '\'' +
-            ", timeStamp=" + timeStamp +
-            ", blobs=" + blobs +
-            '}';
-    }
+    // override toString
 }

@@ -34,6 +34,7 @@ public class Staging implements Serializable {
   public static Staging load(){
     return Utils.readObject(stagingFile, Staging.class);
   }
+
   public void clear(){
     this.additionMap.clear();
     this.additionSet.clear();

@@ -1,18 +1,19 @@
 package gitlet;
 
+import static gitlet.Commit.COMMITS_DIR;
 import static gitlet.HEAD.HEAD_FILE;
 import static gitlet.Staging.*;
 import static gitlet.Utils.*;
 
 import java.io.File;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
-// TODO: any imports you need here
 
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
+
  *  does at a high level.
  *
- *  @author TODO
  */
 public class Repository {
     /*
@@ -34,6 +35,14 @@ public class Repository {
      * will all have the same UID) and all commits in all repositories will trace back to it.
      */
 
+    private static boolean validateNumArgs(int n, String... args) {
+        if (args.length != n) {
+            System.out.println("Incorrect operands.");
+            return false;
+        }
+        return true;
+    }
+
     private static boolean checkExistsMovingForward(String type){
         if (!GITLET_DIR.exists() && !type.equals("init")){
             System.out.println("Not in an initialized Gitlet directory.");
@@ -47,8 +56,7 @@ public class Repository {
     }
 
     public static void init(String... args){
-        if (args.length > 1){
-            System.out.println("Incorrect operands.");
+        if (!validateNumArgs(1, args)){
             System.exit(0);
         }
         if (!checkExistsMovingForward("init")){
@@ -56,24 +64,23 @@ public class Repository {
         }
         GITLET_DIR.mkdir();
         Blob.blobsDir.mkdir();
-        Commit.COMMITS_DIR.mkdir();
+        COMMITS_DIR.mkdir();
+        Branch.BRANCHE_DIR.mkdir();
+//        Remote.REMOTE_DIR.mkdir();
         Staging stagingArea = new Staging();
         stagingArea.save();
-        File initialCommitFile = Utils.join(Commit.COMMITS_DIR, "initialCommit");
-        Commit initialCommit = new Commit();
-        Utils.writeObject(initialCommitFile, initialCommit);
-        // head init?
 
+        Commit initialCommit = new Commit();
+        File initialCommitFile = Utils.join(COMMITS_DIR, "initialCommit");
+        Utils.writeObject(initialCommitFile, initialCommit);
+
+        Branch.setCommitId("master", sha1(initialCommit));
+        HEAD.save("master");
     }
 
     public static void add(String... args){
-        if (!checkExistsMovingForward("add")){
-            System.exit(0);
-        }
-        if (args.length != 2){
-            System.out.println("Incorrect operands.");
-            System.exit(0);
-        }
+        if (!checkExistsMovingForward("add")){System.exit(0);}
+        if (!validateNumArgs(2, args)){System.exit(0);}
         String fileName = args[1];
         // relative path, so this can trigger the file;
         File addedFile = join(CWD, fileName);
@@ -122,6 +129,9 @@ public class Repository {
         prevStaging.save();
         // check the current commit, when log/HEAD created, have to check already exist
 
+        String currentBrand = HEAD.load();
+        String currentCommitId = Branch.getCommitId(currentBrand);
+
     }
 
     public static void commit(String... args){
@@ -129,17 +139,43 @@ public class Repository {
             System.out.println("Please enter a commit message.");
             System.exit(0);
         }
-        if (args.length > 2){
-            System.out.println("Incorrect operands.");
+        if (!validateNumArgs(2, args)){
             System.exit(0);
         }
+        String message = args[1];
         // If no files have been staged, abort. Print the message No changes added to the commit.
-        Staging prevStaging = new Staging();
-        prevStaging = prevStaging.load();
-        if (prevStaging.checkEmpty()){
+        Staging curStaging = new Staging();
+        curStaging = curStaging.load();
+        TreeMap<String, String> curStagingAdditionMap = curStaging.getAdditionMap();
+        TreeSet<String> curStagingAdditionSet = curStaging.getAdditionSet();
+        TreeSet<String> curStagingRemovalSet = curStaging.getRemovalSet();
+        if (curStaging.checkEmpty()){
             System.out.println("No changes added to the commit.");
             System.exit(0);
         }
+        String currentBrand = HEAD.load();
+        String currentCommitId = Branch.getCommitId(currentBrand);
+        File currentCommitFile = ;
+
+
+        Commit newCommit = new Commit(message, currentCommitId, mergedCommitId);
+        for (Map.Entry<String, String> entry : stagingArea.getAddition().entrySet()) {
+            String fileName = entry.getKey();
+            String blobId = entry.getValue();
+            newCommit.getBlobs().put(fileName, blobId);
+        }
+        for (String fileName : stagingArea.getRemoval()) {
+            newCommit.getBlobs().remove(fileName);
+        }
+
+        Branch.setCommitId(HEAD.getBranchName(), newCommit.getHash());
+        stagingArea.clear();
+        stagingArea.save();
+        newCommit.save();
+
+        Commit newCommit = new Commit();
+        prevCommit = Utils.readObject(HEAD, Commit.class);
+
         /**
          * Saves a snapshot of tracked files in the current commit and staging area
          * so they can be restored at a later time, creating a new commit. The commit

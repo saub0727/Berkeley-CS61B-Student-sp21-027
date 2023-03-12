@@ -21,11 +21,10 @@ public class Main {
         String firstArg = args[0];
         switch(firstArg) {
             case "init":
-                Repository.init(args);
-                // TODO: handle the `init` command
+                Repository.init();
                 break;
             case "add":
-                Repository.add(args);
+                Repository.add(args[1]);
                 // TODO: handle the `add [filename]` command
                 break;
             // TODO: FILL THE REST IN
