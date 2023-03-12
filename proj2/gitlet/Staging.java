@@ -4,20 +4,27 @@ import static gitlet.Utils.join;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class Staging implements Serializable {
 
   public static final File stagingFile = join(Repository.GITLET_DIR, "staging");
-  private HashMap<String, String> additionMap;
-  private HashSet<String> additionSet;
-  private HashSet<String> removalSet;
+  private TreeMap<String, String> additionMap;
+  private TreeSet<String> additionSet;
+  private TreeSet<String> removalSet;
 
   public Staging() {
-    this.additionMap = new HashMap<>();
-    this.additionSet = new HashSet<>();
-    this.removalSet = new HashSet<>();
+    this.additionMap = new TreeMap<>();
+    this.additionSet = new TreeSet<>();
+    this.removalSet = new TreeSet<>();
+  }
+
+  public boolean checkEmpty(){
+    if (this.additionSet.isEmpty() && this.removalSet.isEmpty()){
+      return true;
+    }
+    return false;
   }
 
   public void save() {
@@ -33,15 +40,15 @@ public class Staging implements Serializable {
     this.removalSet.clear();
   }
 
-  public HashMap<String, String> getAdditionMap() {
+  public TreeMap<String, String> getAdditionMap() {
     return this.additionMap;
   }
 
-  public HashSet<String> getAdditionSet() {
+  public TreeSet<String> getAdditionSet() {
     return this.additionSet;
   }
 
-  public HashSet<String> getRemovalSet() {
+  public TreeSet<String> getRemovalSet() {
     return this.removalSet;
   }
 

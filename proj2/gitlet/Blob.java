@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.Serializable;
 
 public class Blob implements Serializable {
-  public static final File blobsDir = join(Repository.GITLET_DIR, ".blobs");
+  public static final File blobsDir = join(Repository.GITLET_DIR, "blobs");
   private final byte[] contents;
   private final String blobSHA1;
   private final String fileName;

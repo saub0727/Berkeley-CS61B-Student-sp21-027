@@ -35,11 +35,11 @@ public class Repository {
      */
 
     private static boolean checkExistsMovingForward(String type){
-        if (GITLET_DIR.exists() && type.equals("init")){
-            System.out.println("A Gitlet version-control system already exists in the current directory.");
-            return Boolean.FALSE;
-        } else if (!GITLET_DIR.exists() && !type.equals("init")){
+        if (!GITLET_DIR.exists() && !type.equals("init")){
             System.out.println("Not in an initialized Gitlet directory.");
+            return Boolean.FALSE;
+        } else if (GITLET_DIR.exists() && type.equals("init")){
+            System.out.println("A Gitlet version-control system already exists in the current directory.");
             return Boolean.FALSE;
         } else {
             return Boolean.TRUE;
@@ -67,11 +67,11 @@ public class Repository {
     }
 
     public static void add(String... args){
-        if (args.length != 2){
-            System.out.println("Incorrect operands.");
+        if (!checkExistsMovingForward("add")){
             System.exit(0);
         }
-        if (!checkExistsMovingForward("add")){
+        if (args.length != 2){
+            System.out.println("Incorrect operands.");
             System.exit(0);
         }
         String fileName = args[1];
@@ -97,9 +97,11 @@ public class Repository {
         Blob addedFileBlob = new Blob(readContents(addedFile), fileName);
         String prevFileSHA1 = prevStaging.getAdditionMap().get(fileName);
         String addedFileSHA1 = addedFileBlob.getBlobSHA1();
+        // situation: same name, same SHA1
         if (prevStaging.getAdditionSet().contains(addedFileBlob.getBlobSHA1())){
             return;
         }
+        // situation: same name, diff SHA1
         // if it has identical name with previous version, update the staging
         if (prevStaging.getAdditionMap().containsKey(fileName)){
             prevStaging.rmAdditionMap(fileName);
@@ -111,9 +113,14 @@ public class Repository {
             prevStaging.addAdditionSet(addedFileSHA1);
             addedFileBlob.save();
             prevStaging.save();
+            return;
         }
-        // check the current commit
-
+        // situation: new name
+        prevStaging.addAdditionMap(fileName, addedFileSHA1);
+        prevStaging.addAdditionSet(addedFileSHA1);
+        addedFileBlob.save();
+        prevStaging.save();
+        // check the current commit, when log/HEAD created, have to check already exist
 
     }
 
@@ -127,11 +134,69 @@ public class Repository {
             System.exit(0);
         }
         // If no files have been staged, abort. Print the message No changes added to the commit.
+        Staging prevStaging = new Staging();
+        prevStaging = prevStaging.load();
+        if (prevStaging.checkEmpty()){
+            System.out.println("No changes added to the commit.");
+            System.exit(0);
+        }
+        /**
+         * Saves a snapshot of tracked files in the current commit and staging area
+         * so they can be restored at a later time, creating a new commit. The commit
+         * is said to be tracking the saved files. By default, each commit’s snapshot
+         * of files will be exactly the same as its parent commit’s snapshot of files
+         * ; it will keep versions of files exactly as they are, and not update them.
+         * A commit will only update the contents of files it is tracking that have
+         * been staged for addition at the time of commit, in which case the commit
+         * will now include the version of the file that was staged instead of the
+         * version it got from its parent. A commit will save and start tracking any
+         * files that were staged for addition but won’t be tracked by its parent.
+         * Finally, files tracked in the current commit may be untracked in the
+         * new commit as a result being staged for removal by the rm command (below).
+         *
+         * The bottom line: By default a commit has the same file contents as its
+         * parent. Files staged for addition and removal are the updates to the
+         * commit. Of course, the date (and likely the message) will also different
+         * from the parent.
+         */
+
+
 
     }
 
     public static void rm(String... args){
-
+        if (!checkExistsMovingForward("rm")){
+            System.exit(0);
+        }
+        if (args.length != 2){
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+        String fileName = args[1];
+        // relative path, so this can trigger the file;
+        File rmFile = join(CWD, fileName);
+        // If the file is neither staged nor tracked by the head commit
+        if (Boolean.FALSE){
+            System.out.println("No reason to remove the file.");
+            System.exit(0);
+        }
+        // If the file is tracked in the current commit, stage it for removal and remove
+        // the file from the working directory if the user has not already
+        // done so (do not remove it unless it is tracked in the current commit).
+        Staging prevStaging = new Staging();
+        prevStaging = prevStaging.load();
+        Blob rmFileBlob = new Blob(readContents(rmFile), fileName);
+        String prevFileSHA1 = prevStaging.getAdditionMap().get(fileName);
+        String rmFileSHA1 = rmFileBlob.getBlobSHA1();
+        // in staging:
+        if (prevStaging.getAdditionMap().containsKey(fileName)){
+            prevStaging.rmAdditionMap(fileName);
+            prevStaging.rmAdditionSet(prevFileSHA1);
+            prevStaging.addRemovalSet(prevFileSHA1);
+            prevStaging.save();
+            return;
+        }
+        // in current commit:
     }
 
 
