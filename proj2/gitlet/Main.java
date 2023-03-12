@@ -33,14 +33,13 @@ public class Main {
             case  "commit":
                 Repository.commit(args);
                 break;
+            case  "rm":
+                Repository.rm(args);
+                break;
             case  "log":
                 Repository.log();
                 break;
             default:
-                if (!GITLET_DIR.exists()){
-                    System.out.println("Not in an initialized Gitlet directory.");
-                    System.exit(0);
-                }
                 System.out.println("No command with that name exists.");
                 System.exit(0);
                 break;

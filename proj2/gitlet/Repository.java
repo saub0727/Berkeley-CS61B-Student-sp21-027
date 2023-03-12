@@ -5,6 +5,7 @@ import static gitlet.Commit.COMMITS_DIR;
 import static gitlet.Utils.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -55,7 +56,7 @@ public class Repository {
         }
     }
 
-    public static void init(String... args){
+    public static void init(String... args) throws IOException {
         if (!validateNumArgs(1, args)){
             System.exit(0);
         }
@@ -75,7 +76,7 @@ public class Repository {
 
         Utils.writeObject(initialCommitFile, initialCommit);
 
-        Branch.setCommitId("master", sha1(initialCommit));
+        Branch.setCommitId("master", initialCommit);
         HEAD.save("master");
     }
 
@@ -162,7 +163,7 @@ public class Repository {
         newCommit.save();
         curStaging.clear();
         curStaging.save();
-        Branch.setCommitId(HEAD.load(), sha1(newCommit));
+        Branch.setCommitId(HEAD.load(), newCommit);
 
         /*
          * Saves a snapshot of tracked files in the current commit and staging area
