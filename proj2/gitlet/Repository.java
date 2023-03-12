@@ -73,8 +73,7 @@ public class Repository {
         stagingArea.save();
 
         Commit initialCommit = new Commit();
-        File initialCommitFile = Utils.join(COMMITS_DIR, "initialCommit");
-        Utils.writeObject(initialCommitFile, initialCommit);
+        initialCommit.save();
 
         Branch.setCommitId("master", initialCommit);
         HEAD.saveBranch("master");
