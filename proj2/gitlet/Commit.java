@@ -3,6 +3,7 @@ package gitlet;
 // TODO: any imports you need here
 
 import static gitlet.Utils.join;
+import static gitlet.Utils.serialize;
 import static gitlet.Utils.sha1;
 
 import java.io.ByteArrayOutputStream;
@@ -91,7 +92,9 @@ public class Commit implements Serializable {
     }
 
     public void save() {
-        File currentCommitFile = join(COMMITS_DIR, sha1(this));
+        byte[] bytes = serialize(this);
+        String temp = sha1(bytes);
+        File currentCommitFile = join(COMMITS_DIR, temp);
         Utils.writeObject(currentCommitFile, this);
     }
 

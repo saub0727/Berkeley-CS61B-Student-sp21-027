@@ -37,7 +37,7 @@ public class Main {
                 Repository.rm(args);
                 break;
             case  "log":
-                Repository.log();
+                Repository.log(args);
                 break;
             default:
                 System.out.println("No command with that name exists.");

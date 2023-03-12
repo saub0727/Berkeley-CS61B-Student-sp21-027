@@ -73,11 +73,10 @@ public class Repository {
 
         Commit initialCommit = new Commit();
         File initialCommitFile = Utils.join(COMMITS_DIR, "initialCommit");
-
         Utils.writeObject(initialCommitFile, initialCommit);
 
         Branch.setCommitId("master", initialCommit);
-        HEAD.save("master");
+        HEAD.saveBranch("master");
     }
 
     public static void add(String... args){
@@ -91,10 +90,7 @@ public class Repository {
             System.exit(0);
         }
         Staging prevStaging = Staging.load();
-        String currentBrand = HEAD.load();
-        String currentCommitId = Branch.getCommitId(currentBrand);
-        File currentCommitFile = Utils.join(COMMITS_DIR, currentCommitId);
-        Commit currentCommit = Utils.readObject(currentCommitFile, Commit.class);
+        Commit currentCommit = HEAD.getCurCommit();
         TreeSet<String> currentCommitBlobsSet = currentCommit.getBlobsSet();
 
         Blob addedFileBlob = new Blob(readContents(addedFile), fileName);
@@ -118,6 +114,8 @@ public class Repository {
         prevStaging.save();
     }
 
+
+
     public static void commit(String... args){
         if (args.length == 1){
             System.out.println("Please enter a commit message.");
@@ -128,8 +126,7 @@ public class Repository {
         }
         String message = args[1];
         // If no files have been staged, abort. Print the message No changes added to the commit.
-        Staging curStaging = new Staging();
-        curStaging = curStaging.load();
+        Staging curStaging = Staging.load();
         TreeMap<String, String> curStagingAdditionMap = curStaging.getAdditionMap();
         TreeSet<String> curStagingAdditionSet = curStaging.getAdditionSet();
         TreeSet<String> curStagingRemovalSet = curStaging.getRemovalSet();
@@ -137,11 +134,7 @@ public class Repository {
             System.out.println("No changes added to the commit.");
             System.exit(0);
         }
-        String currentBrand = HEAD.load();
-        String currentCommitId = Branch.getCommitId(currentBrand);
-        File currentCommitFile = Utils.join(COMMITS_DIR, currentCommitId);
-        Commit currentCommit = Utils.readObject(currentCommitFile, Commit.class);
-
+        Commit currentCommit = HEAD.getCurCommit();
         List<String> allFileNames = plainFilenamesIn(blobsDir);
         if (!curStagingRemovalSet.isEmpty()){
             for (String item : curStagingRemovalSet){
@@ -157,13 +150,12 @@ public class Repository {
                 temp.delete();
             }
         }
-
-        Commit newCommit = new Commit(currentCommitId, currentCommit.getFirstParent(), message,
+        Commit newCommit = new Commit(HEAD.getCurCommitID(), currentCommit.getFirstParent(), message,
             curStagingAdditionMap, curStagingAdditionSet, curStagingRemovalSet);
         newCommit.save();
         curStaging.clear();
         curStaging.save();
-        Branch.setCommitId(HEAD.load(), newCommit);
+        Branch.setCommitId(HEAD.getCurBranch(), newCommit);
 
         /*
          * Saves a snapshot of tracked files in the current commit and staging area
@@ -202,18 +194,13 @@ public class Repository {
             System.out.println("No reason to remove the file.");
             System.exit(0);
         }
-        String currentBrand = HEAD.load();
-        String currentCommitId = Branch.getCommitId(currentBrand);
-        File currentCommitFile = Utils.join(COMMITS_DIR, currentCommitId);
-        Commit currentCommit = Utils.readObject(currentCommitFile, Commit.class);
-        TreeSet<String> currentCommitBlobsSet = currentCommit.getBlobsSet();
-
+        Commit currentCommit = HEAD.getCurCommit();
         Staging prevStaging = Staging.load();
         Blob rmFileBlob = new Blob(readContents(rmFile), fileName);
         String prevFileSHA1 = prevStaging.getAdditionMap().get(fileName);
         String rmFileSHA1 = rmFileBlob.getBlobSHA1();
         // check if in current commit first
-        if (currentCommitBlobsSet.contains(rmFileSHA1)){
+        if (currentCommit.getBlobsSet().contains(rmFileSHA1)){
             Utils.join(CWD, fileName).delete();
             prevStaging.addRemovalSet(rmFileSHA1);
             prevStaging.save();
@@ -228,10 +215,13 @@ public class Repository {
         }
     }
 
+    public static void log(String... args) {
+        if (!checkExistsMovingForward("log")){System.exit(0);}
+        if (!validateNumArgs(1, args)){System.exit(0);}
 
 
 
-    public static void log() {
+
     }
 
 
