@@ -56,7 +56,7 @@ public class Repository {
         }
     }
 
-    public static void init(String... args) throws IOException {
+    public static void init(String... args) {
         if (!validateNumArgs(1, args)){
             System.exit(0);
         }
