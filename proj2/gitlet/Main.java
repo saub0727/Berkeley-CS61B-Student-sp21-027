@@ -1,5 +1,7 @@
 package gitlet;
 
+import static gitlet.Repository.GITLET_DIR;
+
 import java.io.File;
 import java.time.LocalDateTime;
 
@@ -21,20 +23,24 @@ public class Main {
         String firstArg = args[0];
         switch(firstArg) {
             case "init":
-                Repository.init();
+                Repository.init(args);
                 break;
             case "add":
-                Repository.add(args[1]);
+                Repository.add(args);
                 // TODO: handle the `add [filename]` command
                 break;
             // TODO: FILL THE REST IN
             case  "commit":
-                Repository.commit();
+                Repository.commit(args);
                 break;
             case  "log":
                 Repository.log();
                 break;
             default:
+                if (!GITLET_DIR.exists()){
+                    System.out.println("Not in an initialized Gitlet directory.");
+                    System.exit(0);
+                }
                 System.out.println("No command with that name exists.");
                 System.exit(0);
                 break;

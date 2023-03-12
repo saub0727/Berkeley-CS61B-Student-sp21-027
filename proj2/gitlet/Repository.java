@@ -72,6 +72,7 @@ public class Repository {
 
         Commit initialCommit = new Commit();
         File initialCommitFile = Utils.join(COMMITS_DIR, "initialCommit");
+
         Utils.writeObject(initialCommitFile, initialCommit);
 
         Branch.setCommitId("master", sha1(initialCommit));
