@@ -22,7 +22,11 @@ public class HEAD {
   }
 
   public static Commit getCurCommit(){
-    File currentCommitFile = Utils.join(COMMITS_DIR, getCurCommitID());
+    return getCommitById(getCurCommitID());
+  }
+
+  public static Commit getCommitById(String SHA1){
+    File currentCommitFile = Utils.join(COMMITS_DIR, SHA1);
     Commit currentCommit = Utils.readObject(currentCommitFile, Commit.class);
     return currentCommit;
   }

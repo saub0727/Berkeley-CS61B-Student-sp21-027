@@ -6,6 +6,7 @@ import static gitlet.Utils.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Formatter;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -218,11 +219,24 @@ public class Repository {
     public static void log(String... args) {
         if (!checkExistsMovingForward("log")){System.exit(0);}
         if (!validateNumArgs(1, args)){System.exit(0);}
-
-
-
-
+        Commit curCommit = HEAD.getCurCommit();
+        while (true){
+            System.out.println("===");
+            System.out.println("commit " + HEAD.getCurCommitID());
+            if (HEAD.getCurCommit().getSecondParent() != null){
+                Formatter ans = new Formatter();
+                ans.format("Merge: %7s %7s", HEAD.getCurCommit().getFirstParent(),
+                    HEAD.getCurCommit().getSecondParent());
+                System.out.println(ans);
+            }
+            System.out.println("Date: " + HEAD.getCurCommit().getTimeStamp());
+            System.out.println(HEAD.getCurCommit().getMessage());
+            System.out.println();
+            if (HEAD.getCurCommit().getFirstParent() == null){break;}
+            else {curCommit = HEAD.getCommitById(curCommit.getFirstParent());}
+        }
     }
+
 
 
 
