@@ -70,9 +70,4 @@ public class Staging implements Serializable {
     this.removalMap.put(SHA1, fileName);
   }
 
-//  public static void getFileNameBySha1(String sha1) {
-//    for (String item : Staging.load().getRemovalSet()){
-//      System.out.println();
-//    }
-//  }
 }

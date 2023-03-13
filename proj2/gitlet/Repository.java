@@ -262,18 +262,28 @@ public class Repository {
         if (!validateNumArgs(1, args)){System.exit(0);}
         Staging prevStaging = Staging.load();
         System.out.println("=== Branches ===");
-
+        List<String> BranchList = Utils.plainFilenamesIn(Branch.BRANCHE_DIR);
+        String curBranch = HEAD.getCurBranch();
+        for (String item : BranchList){
+            if (item.equals(curBranch)){
+                System.out.print("*");
+            }
+            System.out.println(item);
+        }
         System.out.println();
 
 
         System.out.println("=== Staged Files ===");
-
+        for (String item : prevStaging.getAdditionMapName().keySet()){
+            System.out.println(item);
+        }
         System.out.println();
 
 
         System.out.println("=== Removed Files ===");
-
-
+        for (String item : prevStaging.getRemovalMap().values()){
+            System.out.println(item);
+        }
         System.out.println();
 
 
