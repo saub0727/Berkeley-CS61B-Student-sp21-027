@@ -3,20 +3,12 @@ package gitlet;
 // TODO: any imports you need here
 
 import static gitlet.Branch.BRANCHE_DIR;
-import static gitlet.Utils.join;
-import static gitlet.Utils.serialize;
-import static gitlet.Utils.sha1;
+import static gitlet.Utils.*;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Objects;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 
 /** Represents a gitlet commit object.
@@ -39,29 +31,30 @@ public class Commit implements Serializable {
     private String secondParent;
     private String message;
     private Date timeStamp;
-    private TreeMap<String, String> blobsMap;
-    private TreeSet<String> blobsSet;
-    private TreeSet<String> rmBlobsSet;
+    private TreeMap<String, String> blobsMapName;
+    private TreeMap<String, String> blobsMapSha1;
+    private TreeMap<String, String> rmBlobsMap;
 
     public Commit() {
         this.firstParent = null;
         this.secondParent = null;
         this.message = "initial commit";
         this.timeStamp = new Date(0);
-        this.blobsMap = null;
-        this.blobsSet = null;
-        this.rmBlobsSet = null;
+        this.blobsMapName = new TreeMap<>();
+        this.blobsMapSha1 = new TreeMap<>();
+        this.rmBlobsMap = new TreeMap<>();
     }
 
     public Commit(String firstParent, String secondParent, String message,
-        TreeMap<String, String> blobsMap, TreeSet<String> blobsSet, TreeSet<String> rmBlobsSet) {
+        TreeMap<String, String> blobsMapName, TreeMap<String, String> blobsMapSha1,
+        TreeMap<String, String> rmBlobsMap) {
         this.firstParent = firstParent;
         this.secondParent = secondParent;
         this.message = message;
         this.timeStamp = new Date();
-        this.blobsMap = blobsMap;
-        this.blobsSet = blobsSet;
-        this.rmBlobsSet = rmBlobsSet;
+        this.blobsMapName = blobsMapName;
+        this.blobsMapSha1 = blobsMapSha1;
+        this.rmBlobsMap = rmBlobsMap;
     }
 
     public String getFirstParent() {
@@ -80,16 +73,16 @@ public class Commit implements Serializable {
         return timeStamp;
     }
 
-    public TreeMap<String, String> getBlobsMap() {
-        return blobsMap;
+    public TreeMap<String, String> getBlobsMapName() {
+        return blobsMapName;
     }
 
-    public TreeSet<String> getBlobsSet() {
-        return blobsSet;
+    public TreeMap<String, String> getBlobsMapSha1() {
+        return blobsMapSha1;
     }
 
-    public TreeSet<String> getRmBlobsSet() {
-        return rmBlobsSet;
+    public TreeMap<String, String> getRmBlobsMap() {
+        return rmBlobsMap;
     }
 
     public void save(String branchName) {
@@ -108,32 +101,9 @@ public class Commit implements Serializable {
             ", secondParent='" + secondParent + '\'' +
             ", message='" + message + '\'' +
             ", timeStamp=" + timeStamp +
-            ", blobsMap=" + blobsMap +
-            ", blobsSet=" + blobsSet +
-            ", rmBlobsSet=" + rmBlobsSet +
+            ", blobsMapName=" + blobsMapName +
+            ", blobsMapSha1=" + blobsMapSha1 +
+            ", rmBlobsMap=" + rmBlobsMap +
             '}';
     }
-
-    //    @Override
-//    public String toString() {
-//        String ans = "Commit{" +
-//            "firstParent='" + firstParent + '\'' +
-//            ", secondParent='" + secondParent + '\'' +
-//            ", message='" + message + '\'' +
-//            ", timeStamp=" + timeStamp +
-//            ", blobsMap=[";
-//        for (<String, String> item :blobsMap){
-//            ans += item;
-//        }
-//            ans += "], blobsSet=[";
-//        for (String item :blobsSet){
-//            ans += item;
-//        }
-//            ans += "], rmBlobsSet=[";
-//        for (String item :getRmBlobsSet()){
-//            ans += item;
-//        }
-//            ans += "]}";
-//        return ans;
-//    }
 }

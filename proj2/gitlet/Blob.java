@@ -25,10 +25,6 @@ public class Blob implements Serializable {
     return this.blobSHA1;
   }
 
-  public String getFileName() {
-    return this.fileName;
-  }
-
   public void save() {
     File blobs = join(blobsDir, getBlobSHA1());
     Utils.writeContents(blobs, this.getContents());

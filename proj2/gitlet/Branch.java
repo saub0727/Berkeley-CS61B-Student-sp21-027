@@ -1,10 +1,6 @@
 package gitlet;
 
-import static gitlet.Utils.serialize;
-import static gitlet.Utils.sha1;
-
 import java.io.File;
-import java.io.Serializable;
 
 public class Branch {
 

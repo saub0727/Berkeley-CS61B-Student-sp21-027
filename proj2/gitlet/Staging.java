@@ -5,26 +5,23 @@ import static gitlet.Utils.join;
 import java.io.File;
 import java.io.Serializable;
 import java.util.TreeMap;
-import java.util.TreeSet;
+
 
 public class Staging implements Serializable {
 
   public static final File stagingFile = join(Repository.GITLET_DIR, "staging");
-  private TreeMap<String, String> additionMap;
-  private TreeSet<String> additionSet;
-  private TreeSet<String> removalSet;
+  private TreeMap<String, String> additionMapName;
+  private TreeMap<String, String> additionMapSha1;
+  private TreeMap<String, String> removalMap;
 
   public Staging() {
-    this.additionMap = new TreeMap<>();
-    this.additionSet = new TreeSet<>();
-    this.removalSet = new TreeSet<>();
+    this.additionMapName = new TreeMap<>();
+    this.additionMapSha1 = new TreeMap<>();
+    this.removalMap = new TreeMap<>();
   }
 
-  public boolean checkEmpty(){
-    if (this.additionSet.isEmpty() && this.removalSet.isEmpty()){
-      return true;
-    }
-    return false;
+  public boolean isEmpty(){
+    return this.additionMapSha1.isEmpty() && this.removalMap.isEmpty();
   }
 
   public void save() {
@@ -36,40 +33,46 @@ public class Staging implements Serializable {
   }
 
   public void clear(){
-    this.additionMap.clear();
-    this.additionSet.clear();
-    this.removalSet.clear();
+    this.additionMapName.clear();
+    this.additionMapSha1.clear();
+    this.removalMap.clear();
   }
 
-  public TreeMap<String, String> getAdditionMap() {
-    return this.additionMap;
+  public TreeMap<String, String> getAdditionMapName() {
+    return additionMapName;
   }
 
-  public TreeSet<String> getAdditionSet() {
-    return this.additionSet;
+  public TreeMap<String, String> getAdditionMapSha1() {
+    return additionMapSha1;
   }
 
-  public TreeSet<String> getRemovalSet() {
-    return this.removalSet;
+  public TreeMap<String, String> getRemovalMap() {
+    return removalMap;
   }
 
-  public void rmAdditionMap(String key) {
-    this.additionMap.remove(key);
+  public void rmAdditionMapName(String key) {
+    this.additionMapName.remove(key);
   }
 
-  public void rmAdditionSet(String SHA1) {
-    this.additionSet.remove(SHA1);
+  public void rmAdditionMapSha1(String SHA1) {
+    this.additionMapSha1.remove(SHA1);
   }
 
-  public void addAdditionMap(String key, String value) {
-    this.additionMap.put(key, value);
+  public void addAdditionMapName(String fileName, String SHA1) {
+    this.additionMapName.put(fileName, SHA1);
   }
 
-  public void addAdditionSet(String SHA1) {
-    this.additionSet.add(SHA1);
+  public void addAdditionMapSha1(String SHA1, String fileName) {
+    this.additionMapSha1.put(SHA1, fileName);
   }
 
-  public void addRemovalSet(String item) {
-    this.removalSet.add(item);
+  public void addRemovalMap(String SHA1, String fileName) {
+    this.removalMap.put(SHA1, fileName);
   }
+
+//  public static void getFileNameBySha1(String sha1) {
+//    for (String item : Staging.load().getRemovalSet()){
+//      System.out.println();
+//    }
+//  }
 }

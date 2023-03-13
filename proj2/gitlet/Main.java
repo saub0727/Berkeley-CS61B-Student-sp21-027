@@ -42,6 +42,12 @@ public class Main {
             case  "global-log":
                 Repository.globalLog(args);
                 break;
+            case  "find":
+                Repository.find(args);
+                break;
+            case  "status":
+                Repository.status(args);
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0);
