@@ -183,29 +183,25 @@ public class Repository {
         String fileName = args[1];
         // relative path, so this can trigger the file;
         File rmFile = join(CWD, fileName);
-        // If the file is neither staged nor tracked by the head commit
-        if (){
-            System.out.println("No reason to remove the file.");
-            System.exit(0);
-        }
+
         Commit currentCommit = HEAD.getCurCommit();
         Staging prevStaging = Staging.load();
         Blob rmFileBlob = new Blob(readContents(rmFile), fileName);
-        String prevFileSHA1 = prevStaging.getAdditionMapName().get(fileName);
         String rmFileSHA1 = rmFileBlob.getBlobSHA1();
         // check if in current commit first
         if (currentCommit.getBlobsMapSha1() != null && currentCommit.getBlobsMapSha1().containsKey(rmFileSHA1)){
             Utils.join(CWD, fileName).delete();
             prevStaging.addRemovalMap(rmFileSHA1, fileName);
             prevStaging.save();
-            return;
-        }
-        // in staging:
-        if (prevStaging.getAdditionMapName() != null && prevStaging.getAdditionMapName().containsKey(fileName)){
+        } else if (prevStaging.getAdditionMapName() != null && prevStaging.getAdditionMapName().containsKey(fileName)){
+            String prevFileSHA1 = prevStaging.getAdditionMapName().get(fileName);
             prevStaging.rmAdditionMapName(fileName);
             prevStaging.rmAdditionMapSha1(prevFileSHA1);
             prevStaging.addRemovalMap(prevFileSHA1, fileName);
             prevStaging.save();
+        } else {
+            System.out.println("No reason to remove the file.");
+            System.exit(0);
         }
     }
 
@@ -271,7 +267,6 @@ public class Repository {
 
 
         System.out.println("=== Staged Files ===");
-        for ()
 
         System.out.println();
 
