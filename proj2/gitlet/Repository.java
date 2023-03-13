@@ -229,6 +229,7 @@ public class Repository {
             System.out.println("Date: " + curCommit.getTimeStamp());
             System.out.println(curCommit.getMessage());
             System.out.println();
+            System.out.println("");
             if (curCommit.getFirstParent() == null){break;}
             curCommitID = curCommit.getFirstParent();
             curCommit = HEAD.getCommitById(curCommitID);
@@ -245,7 +246,6 @@ public class Repository {
             System.out.println(commit);
         }
     }
-
 
 
 
