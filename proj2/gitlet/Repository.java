@@ -72,11 +72,9 @@ public class Repository {
         Staging stagingArea = new Staging();
         stagingArea.save();
 
-        Commit initialCommit = new Commit();
-        initialCommit.save();
-
-        Branch.setCommitId("master", initialCommit);
         HEAD.saveBranch("master");
+        Commit initialCommit = new Commit();
+        initialCommit.save(HEAD.getCurBranch());
     }
 
     public static void add(String... args){
@@ -97,12 +95,12 @@ public class Repository {
         String prevFileSHA1 = prevStaging.getAdditionMap().get(fileName);
         String addedFileSHA1 = addedFileBlob.getBlobSHA1();
         // situation: if compared with current commit, nothing changed, same SHA1, return
-        if (currentCommitBlobsSet.contains(addedFileSHA1)){return;}
+        if (currentCommitBlobsSet != null && currentCommitBlobsSet.contains(addedFileSHA1)){return;}
         // situation: same name, same SHA1
-        if (prevStaging.getAdditionSet().contains(addedFileSHA1)){return;}
+        if (prevStaging.getAdditionSet() != null && prevStaging.getAdditionSet().contains(addedFileSHA1)){return;}
         // situation: same name, diff SHA1
         // if it has identical name with previous version, update the staging
-        if (prevStaging.getAdditionMap().containsKey(fileName)){
+        if (prevStaging.getAdditionMap() != null && prevStaging.getAdditionMap().containsKey(fileName)){
             prevStaging.rmAdditionMap(fileName);
             prevStaging.rmAdditionSet(prevFileSHA1);
             prevStaging.addRemovalSet(prevFileSHA1);
@@ -136,10 +134,10 @@ public class Repository {
         }
         Commit currentCommit = HEAD.getCurCommit();
         List<String> allFileNames = plainFilenamesIn(blobsDir);
-        if (!curStagingRemovalSet.isEmpty()){
+        if (curStagingRemovalSet != null){
             for (String item : curStagingRemovalSet){
-                if (allFileNames.contains(item)){
-                    if (currentCommit.getBlobsSet().contains(item)){
+                if (allFileNames != null && allFileNames.contains(item)){
+                    if (currentCommit.getBlobsSet() != null && currentCommit.getBlobsSet().contains(item)){
                         continue;
                     }
                     curStagingRemovalSet.remove(item);
@@ -150,12 +148,11 @@ public class Repository {
                 temp.delete();
             }
         }
-        Commit newCommit = new Commit(HEAD.getCurCommitID(), currentCommit.getFirstParent(), message,
+        Commit newCommit = new Commit(HEAD.getCurCommitID(), null, message,
             curStagingAdditionMap, curStagingAdditionSet, curStagingRemovalSet);
-        newCommit.save();
+        newCommit.save(HEAD.getCurBranch());
         curStaging.clear();
         curStaging.save();
-        Branch.setCommitId(HEAD.getCurBranch(), newCommit);
 
         /*
          * Saves a snapshot of tracked files in the current commit and staging area
@@ -200,14 +197,14 @@ public class Repository {
         String prevFileSHA1 = prevStaging.getAdditionMap().get(fileName);
         String rmFileSHA1 = rmFileBlob.getBlobSHA1();
         // check if in current commit first
-        if (currentCommit.getBlobsSet().contains(rmFileSHA1)){
+        if (currentCommit.getBlobsSet() != null && currentCommit.getBlobsSet().contains(rmFileSHA1)){
             Utils.join(CWD, fileName).delete();
             prevStaging.addRemovalSet(rmFileSHA1);
             prevStaging.save();
             return;
         }
         // in staging:
-        if (prevStaging.getAdditionMap().containsKey(fileName)){
+        if (prevStaging.getAdditionMap() != null && prevStaging.getAdditionMap().containsKey(fileName)){
             prevStaging.rmAdditionMap(fileName);
             prevStaging.rmAdditionSet(prevFileSHA1);
             prevStaging.addRemovalSet(prevFileSHA1);
@@ -219,20 +216,33 @@ public class Repository {
         if (!checkExistsMovingForward("log")){System.exit(0);}
         if (!validateNumArgs(1, args)){System.exit(0);}
         Commit curCommit = HEAD.getCurCommit();
+        String curCommitID = HEAD.getCurCommitID();
         while (true){
             System.out.println("===");
-            System.out.println("commit " + HEAD.getCurCommitID());
-            if (HEAD.getCurCommit().getSecondParent() != null){
+            System.out.println("commit " + curCommitID);
+            if (curCommit.getSecondParent() != null){
                 Formatter ans = new Formatter();
-                ans.format("Merge: %7s %7s", HEAD.getCurCommit().getFirstParent(),
-                    HEAD.getCurCommit().getSecondParent());
+                ans.format("Merge: %7s %7s", curCommit.getFirstParent(),
+                    curCommit.getSecondParent());
                 System.out.println(ans);
             }
-            System.out.println("Date: " + HEAD.getCurCommit().getTimeStamp());
-            System.out.println(HEAD.getCurCommit().getMessage());
+            System.out.println("Date: " + curCommit.getTimeStamp());
+            System.out.println(curCommit.getMessage());
             System.out.println();
-            if (HEAD.getCurCommit().getFirstParent() == null){break;}
-            else {curCommit = HEAD.getCommitById(curCommit.getFirstParent());}
+            if (curCommit.getFirstParent() == null){break;}
+            curCommitID = curCommit.getFirstParent();
+            curCommit = HEAD.getCommitById(curCommitID);
+        }
+    }
+
+
+    public static void globalLog(String... args) {
+        if (!checkExistsMovingForward("log")){System.exit(0);}
+        if (!validateNumArgs(1, args)){System.exit(0);}
+        List<String> commitIdList = Utils.plainFilenamesIn(Commit.COMMITS_DIR);
+        for (String commitId : commitIdList) {
+            Commit commit = HEAD.getCommitById(commitId);
+            System.out.println(commit);
         }
     }
 

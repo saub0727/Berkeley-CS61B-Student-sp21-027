@@ -2,6 +2,7 @@ package gitlet;
 
 // TODO: any imports you need here
 
+import static gitlet.Branch.BRANCHE_DIR;
 import static gitlet.Utils.join;
 import static gitlet.Utils.serialize;
 import static gitlet.Utils.sha1;
@@ -91,17 +92,48 @@ public class Commit implements Serializable {
         return rmBlobsSet;
     }
 
-    public void save() {
+    public void save(String branchName) {
         byte[] bytes = serialize(this);
         String temp = sha1(bytes);
         File currentCommitFile = join(COMMITS_DIR, temp);
+        File branchFile = Utils.join(BRANCHE_DIR, branchName);
         Utils.writeObject(currentCommitFile, this);
+        Utils.writeContents(branchFile, temp);
     }
 
-//    public Commit load(){
-//        File currentCommitFile = join(COMMITS_DIR, sha1(this));
-//        return Utils.readObject(currentCommitFile, Commit.class);
-//    }
+    @Override
+    public String toString() {
+        return "Commit{" +
+            "firstParent='" + firstParent + '\'' +
+            ", secondParent='" + secondParent + '\'' +
+            ", message='" + message + '\'' +
+            ", timeStamp=" + timeStamp +
+            ", blobsMap=" + blobsMap +
+            ", blobsSet=" + blobsSet +
+            ", rmBlobsSet=" + rmBlobsSet +
+            '}';
+    }
 
-    // override toString
+    //    @Override
+//    public String toString() {
+//        String ans = "Commit{" +
+//            "firstParent='" + firstParent + '\'' +
+//            ", secondParent='" + secondParent + '\'' +
+//            ", message='" + message + '\'' +
+//            ", timeStamp=" + timeStamp +
+//            ", blobsMap=[";
+//        for (<String, String> item :blobsMap){
+//            ans += item;
+//        }
+//            ans += "], blobsSet=[";
+//        for (String item :blobsSet){
+//            ans += item;
+//        }
+//            ans += "], rmBlobsSet=[";
+//        for (String item :getRmBlobsSet()){
+//            ans += item;
+//        }
+//            ans += "]}";
+//        return ans;
+//    }
 }
