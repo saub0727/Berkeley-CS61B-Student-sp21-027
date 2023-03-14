@@ -271,29 +271,77 @@ public class Repository {
             System.out.println(item);
         }
         System.out.println();
-
-
         System.out.println("=== Staged Files ===");
         for (String item : prevStaging.getAdditionMapName().keySet()){
             System.out.println(item);
         }
         System.out.println();
-
-
         System.out.println("=== Removed Files ===");
         for (String item : prevStaging.getRemovalMap().values()){
             System.out.println(item);
         }
         System.out.println();
-
-
         System.out.println("=== Modifications Not Staged For Commit ===");
+        TreeMap<String, String> modifiedList = new TreeMap<>();
+        TreeMap<String, String> deletedList = new TreeMap<>();
+        Commit curCommit = HEAD.getCurCommit();
+        for (String commitSha1 : curCommit.getBlobsMapSha1().keySet()){
+            String commitFileName = curCommit.getBlobsMapSha1().get(commitSha1);
+            File checkFileChanged = join(CWD, commitFileName);
+            if (!checkFileChanged.exists()){
+                if (prevStaging.getRemovalMap().keySet() != null &&
+                    !prevStaging.getRemovalMap().keySet().contains(commitSha1)){
+                    deletedList.put(commitFileName, commitSha1);
+                }
+            }
+            Blob checkFileChangedBlob = new Blob(readContents(checkFileChanged), commitFileName);
+            String checkFileChangedSHA1 = checkFileChangedBlob.getBlobSHA1();
+            if (!checkFileChangedSHA1.equals(commitSha1)){
+                if (prevStaging.getAdditionMapSha1().keySet() != null && !prevStaging.getAdditionMapSha1().keySet().contains(commitSha1)){
+                    modifiedList.put(commitFileName, checkFileChangedSHA1);
+                }
+            }
+        }
+        for (String commitSha1 : prevStaging.getAdditionMapSha1().keySet()){
+            String tempFileName = prevStaging.getAdditionMapSha1().get(commitSha1);
+            File checkFileChanged = join(CWD, tempFileName);
+            if (!checkFileChanged.exists()){
+                deletedList.put(tempFileName, commitSha1);
+            }
+            Blob checkFileChangedBlob = new Blob(readContents(checkFileChanged), tempFileName);
+            String checkFileChangedSHA1 = checkFileChangedBlob.getBlobSHA1();
 
+            if (!checkFileChangedSHA1.equals(commitSha1)){
+                modifiedList.put(tempFileName, checkFileChangedSHA1);
+            }
+        }
+        for (String item : deletedList.keySet()){
+            System.out.print(item);
+            System.out.print(" (deleted)");
+        }
+        for (String item : modifiedList.keySet()){
+            System.out.print(item);
+            System.out.print(" (modified)");
+            System.out.println();
+        }
         System.out.println();
-
-
         System.out.println("=== Untracked Files ===");
-
+        TreeMap<String, String> untrackedList = new TreeMap<>();
+        List<String> CWDList = Utils.plainFilenamesIn(CWD);
+        for (String fileName : CWDList){
+            File checkFileChanged = join(CWD, fileName);
+            Blob tempBlob = new Blob(readContents(checkFileChanged), fileName);
+            String checkFileChangedSHA1 = tempBlob.getBlobSHA1();
+            if (prevStaging.getAdditionMapSha1().keySet() != null &&
+                !prevStaging.getAdditionMapSha1().keySet().contains(checkFileChangedSHA1)
+                && curCommit.getBlobsMapSha1().keySet() != null &&
+                !curCommit.getBlobsMapSha1().keySet().contains(checkFileChangedSHA1)){
+                untrackedList.put(fileName, checkFileChangedSHA1);
+            }
+        }
+        for (String item : untrackedList.keySet()){
+            System.out.println(item);
+        }
         System.out.println();
     }
 }
